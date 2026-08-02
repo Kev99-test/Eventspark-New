@@ -175,6 +175,11 @@ export default function EventSpark() {
     return;
   }
 
+  if (!form.title.trim() || !form.date || !form.time) {
+    alert("Please enter a title, date, and time.");
+    return;
+  }
+
   if (!session) {
     alert("Please sign in first.");
     return;
