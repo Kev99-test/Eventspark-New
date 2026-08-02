@@ -220,6 +220,22 @@ export default function EventSpark() {
     loadEvents();
   };
 
+  const handleDelete = async (event) => {
+  if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
+
+  const { error } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", event.id);
+
+  if (error) {
+    alert(`Could not delete event: ${error.message}`);
+    return;
+  }
+
+  loadEvents();
+};
+  
   {youHost ? (
   <button
     onClick={() => handleDelete(event)}
