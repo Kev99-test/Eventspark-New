@@ -427,11 +427,7 @@ export default function EventSpark() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+        
 
 function Field({ label, children, style }) {
   return (
