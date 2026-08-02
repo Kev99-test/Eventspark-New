@@ -413,11 +413,6 @@ export default function EventSpark() {
                       <Trash2 size={14} />
                     </button>
                   )}
-                </div>
-                  </a>
-                </div>
-              </div>
-            );
           })}
         </div>
 
