@@ -428,30 +428,6 @@ const handleDelete = async (event) => {
 
   loadEvents();
 };
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  background: SURFACE_2,
-  border: `1px solid ${BORDER}`,
-  borderRadius: 8,
-  padding: "9px 11px",
-  color: TEXT,
-  fontSize: 13.5,
-  outline: "none",
-};
-
-function formatDate(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-function formatTime(timeStr) {
-  const [h, m] = timeStr.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m);
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-}
-
 {youHost ? (
   <button
     onClick={() => handleDelete(event)}
@@ -483,4 +459,28 @@ function formatTime(timeStr) {
     {youJoined ? <><Check size={14} /> Joined</> : full ? "Full" : "Join event"}
   </button>
 )}
+
+const inputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  background: SURFACE_2,
+  border: `1px solid ${BORDER}`,
+  borderRadius: 8,
+  padding: "9px 11px",
+  color: TEXT,
+  fontSize: 13.5,
+  outline: "none",
+};
+
+function formatDate(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function formatTime(timeStr) {
+  const [h, m] = timeStr.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m);
+  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 
