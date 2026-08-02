@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Flame, Users, Calendar, Plus, Check, MapPin, X, Sparkles, LogOut } from "lucide-react";
+import { Flame, Users, Calendar, Plus, Check, MapPin, X, Sparkles, LogOut, Trash2 } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
+
 
 const INK = "#16171A";
 const SURFACE = "#1F2124";
@@ -412,6 +413,22 @@ function Field({ label, children, style }) {
   );
 }
 
+const handleDelete = async (event) => {
+  if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
+
+  const { error } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", event.id);
+
+  if (error) {
+    alert(`Could not delete event: ${error.message}`);
+    return;
+  }
+
+  loadEvents();
+};
+
 const inputStyle = {
   width: "100%",
   boxSizing: "border-box",
@@ -434,3 +451,36 @@ function formatTime(timeStr) {
   d.setHours(h, m);
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
+
+{youHost ? (
+  <button
+    onClick={() => handleDelete(event)}
+    style={{
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      padding: "9px",
+      borderRadius: 9,
+      fontSize: 13.5,
+      fontWeight: 600,
+      cursor: "pointer",
+      border: "1px solid #8B3A3A",
+      background: "rgba(200, 60, 60, 0.12)",
+      color: "#FF8B8B",
+    }}
+  >
+    <Trash2 size={14} />
+    Delete event
+  </button>
+) : (
+  <button
+    onClick={() => handleJoin(event.id)}
+    disabled={youJoined || full}
+    style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 9, fontSize: 13.5, fontWeight: 600, cursor: youJoined || full ? "default" : "pointer", border: `1px solid ${youJoined ? TEAL : BORDER}`, background: youJoined ? "rgba(63,167,150,0.12)" : "transparent", color: youJoined ? TEAL : full ? TEXT_DIM : TEXT }}
+  >
+    {youJoined ? <><Check size={14} /> Joined</> : full ? "Full" : "Join event"}
+  </button>
+)}
+
