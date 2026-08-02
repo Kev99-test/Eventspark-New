@@ -215,10 +215,17 @@ export default function EventSpark() {
 };
 
   const handleJoin = async (eventId) => {
-    if (!session) return;
-    await supabase.from("participants").insert({ event_id: eventId, user_id: session.user.id });
-    loadEvents();
-  };
+  if (!session) return;
+  const { error } = await supabase
+    .from("participants")
+    .insert({ event_id: eventId, user_id: session.user.id });
+  if (error) {
+    console.error(error);
+    alert(`Could not join: ${error.message}`);
+    return;
+  }
+  loadEvents();
+};
 
   const handleDelete = async (event) => {
     if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
