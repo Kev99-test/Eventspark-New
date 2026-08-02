@@ -1,0 +1,36 @@
+create extension if not exists pgcrypto;
+
+create table if not exists public.events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text default '',
+  event_date date not null,
+  event_time time not null,
+  location text default '',
+  capacity int not null default 10,
+  initiator_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.events enable row level security;
+
+drop policy if exists "Events are viewable by everyone" on public.events;
+create policy "Events are viewable by everyone"
+  on public.events for select
+  using (true);
+
+drop policy if exists "Authenticated users can create events" on public.events;
+create policy "Authenticated users can create events"
+  on public.events for insert
+  with check (auth.uid() = initiator_id);
+
+drop policy if exists "Hosts can update their own events" on public.events;
+create policy "Hosts can update their own events"
+  on public.events for update
+  using (auth.uid() = initiator_id)
+  with check (auth.uid() = initiator_id);
+
+drop policy if exists "Hosts can delete their own events" on public.events;
+create policy "Hosts can delete their own events"
+  on public.events for delete
+  using (auth.uid() = initiator_id);
