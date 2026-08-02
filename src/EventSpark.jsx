@@ -1,66 +1,3 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Flame, Users, Calendar, Plus, Check, MapPin, X, Sparkles, LogOut, Trash2 } from "lucide-react";
-import { supabase } from "./lib/supabaseClient";
-
-
-const INK = "#16171A";
-const SURFACE = "#1F2124";
-const SURFACE_2 = "#282A2E";
-const BORDER = "#35373C";
-const TEXT = "#F3F0E8";
-const TEXT_DIM = "#9A988E";
-const EMBER = "#E8871E";
-const EMBER_LIGHT = "#FFB05C";
-const TEAL = "#3FA796";
-const REWARD_TIERS = [3, 6, 10];
-
-function fmtGCalDate(dateStr, timeStr, durationMins = 60) {
-  const start = new Date(`${dateStr}T${timeStr}`);
-  const end = new Date(start.getTime() + durationMins * 60000);
-  const pad = (n) => String(n).padStart(2, "0");
-  const toUtc = (d) =>
-    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(
-      d.getUTCHours()
-    )}${pad(d.getUTCMinutes())}00Z`;
-  return `${toUtc(start)}/${toUtc(end)}`;
-}
-
-function buildGCalUrl(event) {
-  const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: event.title,
-    dates: fmtGCalDate(event.event_date, event.event_time),
-    details: `${event.description}\n\nHosted by ${event.host_name} on EventSpark.`,
-    location: event.location || "",
-  });
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-export default function EventSpark() {
-  const [session, setSession] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [log, setLog] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    date: "",
-    time: "",
-    location: "",
-    capacity: 10,
-  });
-
-  // --- Auth -----------------------------------------------------------
-  useEffect(() => {
-  let active = true;
-
-  const restoreSession = async () => {
-    const code = new URLSearchParams(window.location.search).get("code");
-
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) console.error("OAuth session exchange failed:", error);
       window.history.replaceState({}, "", window.location.pathname);
     }
 
@@ -215,17 +152,38 @@ export default function EventSpark() {
 };
 
   const handleJoin = async (eventId) => {
-  if (!session) return;
-  const { error } = await supabase
-    .from("participants")
-    .insert({ event_id: eventId, user_id: session.user.id });
-  if (error) {
-    console.error(error);
-    alert(`Could not join: ${error.message}`);
-    return;
-  }
-  loadEvents();
-};
+    if (!session) return;
+    const { error } = await supabase
+      .from("participants")
+      .insert({ event_id: eventId, user_id: session.user.id });
+    if (error) {
+      console.error(error);
+      alert(`Could not join: ${error.message}`);
+      return;
+    }
+    loadEvents();
+  };
+
+  const handleLeave = async (eventId) => {
+    if (!session) return;
+    const { data, error } = await supabase
+      .from("participants")
+      .delete()
+      .eq("event_id", eventId)
+      .eq("user_id", session.user.id)
+      .select();
+    if (error) {
+      console.error(error);
+      alert(`Could not leave event: ${error.message}`);
+      return;
+    }
+    console.log("Rows deleted:", data);
+    if (!data || data.length === 0) {
+      alert("No rows were deleted — likely blocked by a row-level security policy.");
+      return;
+    }
+    loadEvents();
+  };
 
   const handleDelete = async (event) => {
     if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
@@ -383,11 +341,12 @@ export default function EventSpark() {
 
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
-                    onClick={() => handleJoin(event.id)}
-                    disabled={youJoined || full}
-                    style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 9, fontSize: 13.5, fontWeight: 600, cursor: youJoined || full ? "default" : "pointer", border: `1px solid ${youJoined ? TEAL : BORDER}`, background: youJoined ? "rgba(63,167,150,0.12)" : "transparent", color: youJoined ? TEAL : full ? TEXT_DIM : TEXT }}
+                    onClick={() => (youJoined ? handleLeave(event.id) : handleJoin(event.id))}
+                    disabled={!youJoined && full}
+                    title={youJoined ? "Click to leave this event" : undefined}
+                    style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 9, fontSize: 13.5, fontWeight: 600, cursor: !youJoined && full ? "default" : "pointer", border: `1px solid ${youJoined ? TEAL : BORDER}`, background: youJoined ? "rgba(63,167,150,0.12)" : "transparent", color: youJoined ? TEAL : full ? TEXT_DIM : TEXT }}
                   >
-                    {youJoined ? (<><Check size={14} /> Joined</>) : full ? "Full" : "Join event"}
+                    {youJoined ? (<><Check size={14} /> Joined (leave)</>) : full ? "Full" : "Join event"}
                   </button>
                   <a
                     href={buildGCalUrl(event)}
