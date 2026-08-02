@@ -52,6 +52,37 @@ export default function EventSpark() {
 
   // --- Auth -----------------------------------------------------------
   useEffect(() => {
+  let active = true;
+
+  const restoreSession = async () => {
+    const code = new URLSearchParams(window.location.search).get("code");
+
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) console.error("OAuth session exchange failed:", error);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    const { data } = await supabase.auth.getSession();
+    if (active) setSession(data.session);
+  };
+
+  restoreSession();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    if (active) setSession(currentSession);
+  });
+
+  return () => {
+    active = false;
+    subscription.unsubscribe();
+  };
+}, []);
+  
+  
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
