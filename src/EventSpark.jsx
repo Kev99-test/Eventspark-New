@@ -168,23 +168,45 @@ export default function EventSpark() {
 
   // --- Actions -----------------------------------------------------------
   const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!form.title.trim() || !form.date || !form.time || !session) return;
-    const { error } = await supabase.from("events").insert({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      event_date: form.date,
-      event_time: form.time,
-      location: form.location.trim(),
-      capacity: Number(form.capacity) || 10,
-      initiator_id: session.user.id,
-    });
-    if (!error) {
-      setForm({ title: "", description: "", date: "", time: "", location: "", capacity: 10 });
-      setShowForm(false);
-      loadEvents();
-    }
-  };
+  e.preventDefault();
+
+  if (!form.title.trim() || !form.date || !form.time) {
+    alert("Please enter a title, date, and time.");
+    return;
+  }
+
+  if (!session) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  const { error } = await supabase.from("events").insert({
+    title: form.title.trim(),
+    description: form.description.trim(),
+    event_date: form.date,
+    event_time: form.time,
+    location: form.location.trim(),
+    capacity: Number(form.capacity) || 10,
+    initiator_id: session.user.id,
+  });
+
+  if (error) {
+    console.error(error);
+    alert(`Could not create event: ${error.message}`);
+    return;
+  }
+
+  setForm({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    location: "",
+    capacity: 10,
+  });
+  setShowForm(false);
+  loadEvents();
+};
 
   const handleJoin = async (eventId) => {
     if (!session) return;
