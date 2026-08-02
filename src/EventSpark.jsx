@@ -220,6 +220,22 @@ export default function EventSpark() {
     loadEvents();
   };
 
+  const handleDelete = async (event) => {
+  if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
+
+  const { error } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", event.id);
+
+  if (error) {
+    alert(`Could not delete event: ${error.message}`);
+    return;
+  }
+
+  loadEvents();
+};
+
   const sorted = useMemo(
     () => [...events].sort((a, b) => new Date(`${a.event_date}T${a.event_time}`) - new Date(`${b.event_date}T${b.event_time}`)),
     [events]
@@ -380,6 +396,24 @@ export default function EventSpark() {
                   >
                     <Calendar size={14} />
                     Add to calendar
+                    href={buildGCalUrl(event)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 9, fontSize: 13.5, fontWeight: 600, textDecoration: "none", border: `1px solid ${BORDER}`, color: TEXT }}
+                  >
+                    <Calendar size={14} />
+                    Add to calendar
+                  </a>
+                  {youHost && (
+                    <button
+                      onClick={() => handleDelete(event)}
+                      title="Delete event"
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "9px", borderRadius: 9, border: `1px solid ${BORDER}`, background: "transparent", color: TEXT_DIM, cursor: "pointer", flex: "0 0 auto" }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
                   </a>
                 </div>
               </div>
@@ -436,20 +470,6 @@ function formatTime(timeStr) {
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
-const handleDelete = async (event) => {
-  if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
 
-  const { error } = await supabase
-    .from("events")
-    .delete()
-    .eq("id", event.id);
-
-  if (error) {
-    alert(`Could not delete event: ${error.message}`);
-    return;
-  }
-
-  loadEvents();
-};
 
 
