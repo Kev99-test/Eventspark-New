@@ -229,14 +229,20 @@ export default function EventSpark() {
 
   const handleLeave = async (eventId) => {
     if (!session) return;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("participants")
       .delete()
       .eq("event_id", eventId)
-      .eq("user_id", session.user.id);
+      .eq("user_id", session.user.id)
+      .select();
     if (error) {
       console.error(error);
       alert(`Could not leave event: ${error.message}`);
+      return;
+    }
+    console.log("Rows deleted:", data);
+    if (!data || data.length === 0) {
+      alert("No rows were deleted — likely blocked by a row-level security policy.");
       return;
     }
     loadEvents();
